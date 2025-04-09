@@ -2,7 +2,6 @@ import SwiftUI
 
 struct SearchView: View {
     @StateObject private var viewModel = SearchViewModel()
-    @EnvironmentObject private var dataManager: DataManager
     
     var body: some View {
         NavigationStack {
@@ -28,16 +27,17 @@ struct SearchView: View {
                         .padding()
                 }
                 
-                List(viewModel.results) { ticker in
-                    NavigationLink(destination: DetailView(initialTicker: ticker.symbol)) {
-                        VStack(alignment: .leading) {
-                            Text(ticker.symbol)
-                                .font(.headline)
-                            if let name = ticker.name {
-                                Text(name)
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
-                            }
+                // Zobrazení výsledků
+                List(viewModel.results) { tickerItem in
+                    // V detailu třeba použijete tickerItem.ticker
+                    // Příklad zobrazení
+                    VStack(alignment: .leading) {
+                        Text(tickerItem.ticker)
+                            .font(.headline)
+                        if let name = tickerItem.name {
+                            Text(name)
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
                         }
                     }
                 }

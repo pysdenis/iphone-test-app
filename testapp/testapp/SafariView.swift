@@ -1,3 +1,11 @@
+//
+//  SafariView.swift
+//  testapp
+//
+//  Created by Denis Pyš on 02.04.2025.
+//
+
+
 import SwiftUI
 import SafariServices
 

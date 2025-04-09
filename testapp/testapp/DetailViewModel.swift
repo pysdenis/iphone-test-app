@@ -7,7 +7,7 @@ class DetailViewModel: ObservableObject {
     @Published var loading: Bool = false
     @Published var errorMessage: String? = nil
     
-    private let apiKey = "YOUR_API_KEY_HERE" // Nahraďte svým API klíčem
+    private let apiKey = "PbnwkWypB_3AdPk2LONdDqVee15iuS2H"
     
     func fetchStock(symbol: String) {
         let sym = symbol.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
@@ -43,11 +43,13 @@ class DetailViewModel: ObservableObject {
         }
     }
     
+    /// Načte denní agregátní data a nastaví aktuální cenu podle zavírací ceny (c)
     func fetchCurrentPrice(for symbol: String) {
         let sym = symbol.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
         guard !sym.isEmpty else { return }
         
-        let urlString = "https://api.polygon.io/v1/last/stocks/\(sym)?apiKey=\(apiKey)"
+        // Používáme endpoint daily ticker summary (v2)
+        let urlString = "https://api.polygon.io/v2/aggs/ticker/\(sym)/prev?adjusted=true&apiKey=\(apiKey)"
         
         Task {
             do {
@@ -59,9 +61,13 @@ class DetailViewModel: ObservableObject {
                     throw URLError(.badServerResponse)
                 }
                 let decoder = JSONDecoder()
-                let result = try decoder.decode(LastTradeResponse.self, from: data)
-                await MainActor.run {
-                    self.currentPrice = result.last.price
+                let result = try decoder.decode(DailyTickerSummaryResponse.self, from: data)
+                if let summary = result.results.first, let closePrice = summary.c {
+                    await MainActor.run {
+                        self.currentPrice = closePrice
+                    }
+                } else {
+                    throw URLError(.cannotParseResponse)
                 }
             } catch {
                 await MainActor.run {
@@ -76,10 +82,20 @@ fileprivate struct PolygonTickerResponse: Codable {
     let results: StockInfo
 }
 
-struct LastTradeResponse: Codable {
-    let last: LastTrade
+struct DailyTickerSummaryResponse: Codable {
+    let ticker: String
+    let adjusted: Bool
+    let results: [DailyTickerSummary]
+    let status: String
 }
 
-struct LastTrade: Codable {
-    let price: Double
+struct DailyTickerSummary: Codable {
+    let v: Int?        // volume
+    let vw: Double?    // volume weighted average price
+    let o: Double?     // open
+    let c: Double?     // close – použijeme tuto hodnotu jako aktuální cenu
+    let h: Double?     // high
+    let l: Double?     // low
+    let t: Int64?      // timestamp
+    let n: Int?        // počet transakcí
 }

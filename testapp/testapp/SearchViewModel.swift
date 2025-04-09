@@ -7,7 +7,7 @@ class SearchViewModel: ObservableObject {
     @Published var loading: Bool = false
     @Published var errorMessage: String? = nil
     
-    private let apiKey = "YOUR_API_KEY_HERE" // Nahraďte svým API klíčem
+    private let apiKey = "PbnwkWypB_3AdPk2LONdDqVee15iuS2H"
     
     func search() {
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -18,7 +18,9 @@ class SearchViewModel: ObservableObject {
         loading = true
         errorMessage = nil
         
-        let urlString = "https://api.polygon.io/v3/reference/tickers?search=\(trimmed)&apiKey=\(apiKey)"
+        // Endpoint v2 s parametrem ?search=...
+        let urlString = "https://api.polygon.io/v2/reference/tickers?sort=ticker&search=\(trimmed)&apiKey=\(apiKey)"
+        
         guard let url = URL(string: urlString) else {
             self.errorMessage = "Špatná URL"
             self.loading = false
@@ -32,9 +34,10 @@ class SearchViewModel: ObservableObject {
                     throw URLError(.badServerResponse)
                 }
                 let decoder = JSONDecoder()
-                let searchResponse = try decoder.decode(SearchResponse.self, from: data)
+                let searchResponse = try decoder.decode(SearchResponseV2.self, from: data)
                 await MainActor.run {
-                    self.results = searchResponse.results
+                    // Uložíme výsledky do published property
+                    self.results = searchResponse.tickers
                     self.loading = false
                 }
             } catch {

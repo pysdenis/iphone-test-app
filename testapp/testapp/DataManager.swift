@@ -1,3 +1,11 @@
+//
+//  DataManager.swift
+//  testapp
+//
+//  Created by Denis Pyš on 02.04.2025.
+//
+
+
 import Foundation
 import SQLite3
 import Combine
